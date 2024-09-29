@@ -1,0 +1,29 @@
+<script setup>
+
+    src:"https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.2/p5.min.js"
+
+</script>
+
+<template>
+ 
+  <Pieces/>
+  <PiecesFunction/>
+
+</template>
+
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
+
+body{
+    margin: 0;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+}
+
+</style>
+
+
