@@ -1,4 +1,36 @@
+<template> 
+    
+    <div ref="canvasContainer"></div>
+
+</template>
+
 <script setup>
+
+import { ref, onMounted } from 'vue';
+import { useNuxtApp } from '#app';
+import p5 from 'p5';
+
+defineOptions({ ssr: false });
+
+const canvasContainer = ref(null);
+
+onMounted(() => {
+  if (process.client) {
+    new p5((p) => {
+      p.setup = () => {
+        p.createCanvas(400, 400);
+        p.background(200);
+      };
+
+      p.draw = () => {
+        p.fill(255, 0, 0);
+        p.rect(50, 50, 100, 100);
+      };
+    }, canvasContainer.value);
+  }
+});
+
+console.log('Initializing p5', window.performance);
 
 //Define o tamanho de cada espaço da grade
 const gridSpace =30;
@@ -32,12 +64,13 @@ const colors = [
     '#ff7666',
     '#70b3f5',
     '#b2e77d',
-    '#ffd700'
+    '#ffd700',
 ];
 
 // Configuração de função chamada uma vez no começo
 function setup() {
     createCanvas(600, 540);
+    console.log("Setup chamdado")
 
     // Criar uma nova peça caindo
     fallingPiece = new PlayPiece();
@@ -52,10 +85,13 @@ function draw(){
     //Define as cores usadas no jogo
     const colorDark = '#0d0d0d';
     const colorLight = '#304550';
-    const colorBackground = '#e1eeb0';
+    const colorBackground = '#CDDC39';
+    console.log("Draw chamado");
+
+    // '#e1eeb0'
 
     //Define a cor de fundo
-    colorBackground(colorBackground);
+    background(colorBackground);
 
     //Desenha o lado direito do painel 
     fill(25);
@@ -117,19 +153,24 @@ function draw(){
     textSize(24);
     textAlign(RIGHT);
     text(currentScore, 560, 135);
-    text(currentScore, 560, 260);
-    text(currentScore, 560, 330);
+
+    text(currentLevel, 560, 260);
+    text(linesCleared, 560, 330);
 
     //Desenha a borda do jogo
     stroke(colorDark);
     line(gameEdgeRight, 0, gameEdgeRight, height);
 
-    //Show the falling piece
-    fallingPiece.show();
+    //Mostra a queda de uma peça
+    if (fallingPiece) {
+        
+        fallingPiece.show();
+
+    }
 
     // Aumenta a velocidade da queda da peça se a seta pra baixo é pressionada
     if (keyIsDown(DOWN_ARROW)) {
-        upateEvery = 2;
+        updateEvery = 2;
     } else {
         updateEvery = updateEveryCurrent;
     }
@@ -164,16 +205,16 @@ function draw(){
     noStroke();
     textSize(14);
     text("Controls:\n↑\n← ↓ →\n", 75, 155);
-    text("Left and Right: /nmove side to side", 75, 230);
-    text("Up:/nrotate", 75, 280);
-    text("Down:/nfall faster", 75, 330);
-    text("R:/nreset game", 75, 380);
+    text("Left and Right: \nmove side to side", 75, 230);
+    text("Up:\nrotate", 75, 280);
+    text("Down:\nfall faster", 75, 330);
+    text("R:\nreset game", 75, 380);
 
     // Mostra o texto de game over
     if (gameOver) {
         fill(colorDark);
         textSize(54);
-        textAlign("Game Over!", 300, 270);
+        text("Game Over!", 300, 270);
     }
 
     //Desenha a borda do jogo
@@ -185,10 +226,13 @@ function draw(){
 
 // Função chamada quando uma tecla é pressionada
 function keyPressed() {
-    if (keyCode == 82) {
+    if (keyCode === 82) {
         // 'Tecla R'
         resetGame();
+       
     }
+    
+
     if(!pauseGame) {
         if (keyCode === LEFT_ARROW) {
             fallingPiece.input(LEFT_ARROW);
@@ -199,12 +243,13 @@ function keyPressed() {
             fallingPiece.input(UP_ARROW);
         }
     }
+
 }
 
 // Classe para uma peça caindo
 class PlayPiece {
     constructor(){
-        this.pos = createVector(0,0);
+        this.pos = createVector(300,0);
         this.rotation = 0;
         this.nextPieceType = Math.floor(Math.random() * 7);
         this.nextPieces = [];
@@ -214,12 +259,12 @@ class PlayPiece {
         this.fallen = false;
     }
 
-    // Generate the next piece
+    // Gera a próxima peça
     nextPiece(){
         this.nextPieceType = pseudoRandom(this.pieceType);
         this.nextPieces = [];
 
-        const points = this.orientPoints(this.nextPieceType, 0);
+        const points = orientPoints(this.nextPieceType, 0);
         let xx = 525, yy = 490;
 
         if (this.nextPieceType !== 0 && this.nextPieceType !== 3 && this.nextPieceType !== 5) {
@@ -230,8 +275,8 @@ class PlayPiece {
             xx -= (gridSpace * 0.5);
         }
 
-        for (let i = 0; i< 4; i++) {
-            this.nextPieces(new Square(xx + points[i][0] * gridSpace, yy + points[i][1] * gridSpace, this.nextPieceType));
+        for (let i = 0; i < 4; i++) {
+            this.nextPieces.push(new Square(xx + points[i][0] * gridSpace, yy + points[i][1] * gridSpace, this.nextPieceType));
         }
     }
 
@@ -255,16 +300,18 @@ class PlayPiece {
         this.fallen = false;
         this.pos.x = 330;
         this.pos.y = -60;
-
+        
         this.pieceType = this.nextPieceType;
 
         this.nextPiece();
         this.newPoints();
+
+        console.log("Peça resetada")
     }
 
     // Gera os pontos da peça atual
     newPoints() {
-        const points =  this.orientPoints(this.pieceType, this.rotation);
+        const points = orientPoints(this.pieceType, this.rotation);
         this.orientation = points;
         this.pieces = [];
 
@@ -274,7 +321,7 @@ class PlayPiece {
     }
 
     //Atualiza a posição da peça atual
-    newPoints() {
+    newPointsCurrent() {
         const points = orientPoints(this.pieceType, this.rotation);
         this.orientation = points;
         this.pieces = [];
@@ -310,31 +357,37 @@ class PlayPiece {
         }
     }
     // Check se isso se tornar uma colisão no futuro
-    futureCollision(x,y, rotation) {
+    futureCollision(x, y, rotation) {
         let xx, yy, points = 0;
-        if (rotation !== this.rotation){
-            points = orientPoints(this.pieceType, rotation);
+        if(rotation !== this.rotation) {
+            points = this.orientPoints(this.pieceType, rotation);
         }
 
-        for(let i = 0; i < this.pieces.length; i++) {
+        for (let i = 0; i < this.pieces.length; i++) {
             if (points) {
                 xx = this.pos.x + points[i][0] * gridSpace;
+                yy = this.pos.y + points[i][1] * gridSpace;
+            } else {
+                xx = this.pieces[i].pos.x + x;
                 yy = this.pieces[i].pos.y + y;
             }
-            if(xx < gameEdgeLeft || xx + gridSpace > gameEdgeRight || yy + gridSpace > height ) {
-               return true; 
+            if (xx < gameEdgeLeft || xx + gridSpace > gameEdgeRight || yy + gridSpace > height) {
+                return true;
             }
-            for (let j =0; j < gridPieces.length; j++) {
-                if (xx === gridPieces[j].pos.x) {
-                    if (yy >= gridPieces[j].pos.y && yy < gridPieces[j].pos.y && yy + gridSpace <= gridPieces[j].pos.y + gridSpace) {
+            for (let j = 0; j < gridPieces.length; j++) {
+                if (xx == gridPieces[j].pos.x) {
+                    if (yy >= gridPieces[j].pos.y && yy < gridPieces[j].pos.y + gridSpace) {
+                        return true;
+                    }
+                    if (yy + gridSpace > gridPieces[j].pos.y && yy + gridSpace <= gridPieces[j].pos.y + gridSpace) {
                         return true;
                     }
                 }
             }
         }
+        return false;
     }
-
-
+                  
 // Tratativa de inputs de usuário
  input(key) {
     switch(key) {
@@ -349,6 +402,8 @@ class PlayPiece {
             }
             break;
         case UP_ARROW:
+
+            this.rotate();
             let newRotation = this.rotation + 1;
             if(newRotation > 3) {
                 newRotation = 0;
@@ -372,10 +427,14 @@ class PlayPiece {
 
  //Mostra a peça atual
  show() {
+
+    fill(255);
+    rect(this.pos.x, this.pos.y, 30, 30);
+
     for (let i = 0; i < this.pieces.length; i++) {
         this.pieces[i].show();
     }
-    for(let i = 0; i < this.nextPiece.length; i++) {
+    for(let i = 0; i < this.nextPieces.length; i++) {
         this.nextPieces[i].show();
     }
  }
@@ -401,10 +460,8 @@ class Square {
     //Mostra o quadrado
     show() {
         strokeWeight(2);
-        const colorDark = '#092e1d';
-        const colorMid = colors[this.type];
-
-        fill(colorMid);
+        
+        fill(colors[this.type]);
         stroke(25);
         rect(this.pos.x, this.pos.y, gridSpace - 1, gridSpace - 1);
 
@@ -432,6 +489,7 @@ function analyzeGrid(){
     let score = 0;
     while (checkLines()) {
         linesCleared += 1;
+        score += 50;
         if (linesCleared % 10 === 0) {
             currentLevel += 1;
             if (updateEveryCurrent > 2) {
@@ -440,7 +498,7 @@ function analyzeGrid(){
         }
     }
     if (score > 100) {
-        scpre *= 2;
+        score *= 2;
     }
     currentScore += score;
 }
@@ -454,6 +512,7 @@ function checkLines() {
             }
         }
         if(count === 10) {
+          
             //Remova as peças nas coodernadas y
             gridPieces = gridPieces.filter(piece => piece.pos.y !== y );
             //Move as peças para abaixo da coordernada y
@@ -507,9 +566,8 @@ function resetGame(){
     fallSpeed = gridSpace * 0.5;
     pauseGame = false;
     gameOver = false;
-}
+};
 
 </script>
 
 
-<template></template>

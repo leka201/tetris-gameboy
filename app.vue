@@ -1,14 +1,13 @@
 <script setup>
 
-    src:"https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.2/p5.min.js"
+import PiecesFunction from './components/PiecesFunction.vue'
 
 </script>
 
 <template>
- 
-  <Pieces/>
-  <PiecesFunction/>
 
+  <PiecesFunction/>
+  
 </template>
 
 <style>
@@ -24,6 +23,9 @@ body{
     height: 100vh;
 }
 
+.nuxt-loading {
+  display: none !important;
+}
 </style>
 
 

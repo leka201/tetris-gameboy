@@ -1,5 +1,3 @@
-<script setup>
-
 function orientPoints(pieceType, rotation) {
     let results =[];
     switch (pieceType) {
@@ -87,7 +85,7 @@ function orientPoints(pieceType, rotation) {
                     break;
                 case 1:
                     results = [
-                        [-1,-1,]
+                        [-1,-1,],
                         [-1,0],
                         [-1,1],
                         [0,1]
@@ -230,8 +228,3 @@ function orientPoints(pieceType, rotation) {
     }
     return results;
 }
-
-</script>
-
-
-<template></template>
